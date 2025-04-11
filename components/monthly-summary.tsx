@@ -1,159 +1,171 @@
 "use client"
 
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-
-// Mock data for demonstration
-const MONTHLY_DATA = [
-  { month: "January", completed: 12, hours: 28 },
-  { month: "February", completed: 18, hours: 34 },
-  { month: "March", completed: 24, hours: 42 },
-  { month: "April", completed: 32, hours: 38 },
-  { month: "May", completed: 28, hours: 36 },
-  { month: "June", completed: 34, hours: 50 },
-]
-
-// Weekly data
-const WEEKLY_DATA = [
-  { week: "Week 1", completed: 6, hours: 12 },
-  { week: "Week 2", completed: 8, hours: 14 },
-  { week: "Week 3", completed: 10, hours: 12 },
-  { week: "Week 4", completed: 12, hours: 16 },
-]
+import { useTasks } from "@/hooks/use-tasks"
+import { Card } from "@/components/ui/card"
+import { startOfMonth, endOfMonth, format } from "date-fns"
+import {
+  Bar,
+  BarChart,
+  ResponsiveContainer,
+  XAxis,
+  YAxis,
+  Tooltip,
+  Cell
+} from "recharts"
 
 export function MonthlySummary() {
-  // Find the maximum value for scaling
-  const maxCompleted = Math.max(...MONTHLY_DATA.map((item) => item.completed))
-  const maxHours = Math.max(...MONTHLY_DATA.map((item) => item.hours))
+  const { tasks } = useTasks()
+  const currentDate = new Date()
+  const monthStart = startOfMonth(currentDate)
+  const monthEnd = endOfMonth(currentDate)
+
+  const stats = {
+    total: tasks?.length || 0,
+    completed: tasks?.filter(task => task.status === 'completed').length || 0,
+    high: tasks?.filter(task => task.priority === 'high').length || 0,
+    medium: tasks?.filter(task => task.priority === 'medium').length || 0,
+    low: tasks?.filter(task => task.priority === 'low').length || 0,
+  }
+
+  const completionRate = stats.total > 0 
+    ? Math.round((stats.completed / stats.total) * 100) 
+    : 0
+
+  const monthlyTasks = tasks?.filter(task => {
+    const taskDate = new Date(task.dueDate)
+    return taskDate >= monthStart && taskDate <= monthEnd
+  }) || []
+
+  const priorityChartData = [
+    { name: 'High', value: stats.high, color: '#ef4444' },
+    { name: 'Medium', value: stats.medium, color: '#f59e0b' },
+    { name: 'Low', value: stats.low, color: '#3b82f6' },
+  ]
+
+  const statusChartData = [
+    { name: 'Completed', value: stats.completed, color: '#22c55e' },
+    { name: 'Pending', value: stats.total - stats.completed, color: '#94a3b8' },
+  ]
 
   return (
-    <div className="space-y-6">
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle>Task Completion</CardTitle>
-          <Select defaultValue="monthly">
-            <SelectTrigger className="w-[180px]">
-              <SelectValue placeholder="View" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="weekly">Weekly</SelectItem>
-              <SelectItem value="monthly">Monthly</SelectItem>
-              <SelectItem value="yearly">Yearly</SelectItem>
-            </SelectContent>
-          </Select>
-        </CardHeader>
-        <CardContent>
-          <div className="h-[300px] w-full">
-            <div className="flex items-end h-[250px] w-full gap-2">
-              {MONTHLY_DATA.map((item, index) => (
-                <div key={index} className="flex flex-col items-center flex-1">
-                  <div
-                    className="w-full bg-blue-500 rounded-t-md transition-all duration-500 ease-in-out hover:bg-blue-600"
-                    style={{ height: `${(item.completed / maxCompleted) * 100}%` }}
-                  ></div>
-                  <span className="text-xs mt-2">{item.month}</span>
-                </div>
-              ))}
-            </div>
-            <div className="flex justify-between mt-4">
-              <span className="text-xs text-muted-foreground">0</span>
-              <span className="text-xs text-muted-foreground">{maxCompleted}</span>
-            </div>
+    <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+      <Card className="p-6">
+        <div className="flex flex-col gap-2">
+          <h3 className="text-sm font-medium text-gray-500">Total Tasks</h3>
+          <div className="flex items-baseline gap-2">
+            <span className="text-3xl font-bold">{stats.total}</span>
+            <span className="text-sm text-gray-500">tasks</span>
           </div>
-        </CardContent>
+        </div>
       </Card>
 
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle>Hours Worked</CardTitle>
-          <Select defaultValue="monthly">
-            <SelectTrigger className="w-[180px]">
-              <SelectValue placeholder="View" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="weekly">Weekly</SelectItem>
-              <SelectItem value="monthly">Monthly</SelectItem>
-              <SelectItem value="yearly">Yearly</SelectItem>
-            </SelectContent>
-          </Select>
-        </CardHeader>
-        <CardContent>
-          <div className="h-[300px] w-full">
-            <div className="flex items-end h-[250px] w-full gap-2">
-              {MONTHLY_DATA.map((item, index) => (
-                <div key={index} className="flex flex-col items-center flex-1">
-                  <div
-                    className="w-full bg-purple-500 rounded-t-md transition-all duration-500 ease-in-out hover:bg-purple-600"
-                    style={{ height: `${(item.hours / maxHours) * 100}%` }}
-                  ></div>
-                  <span className="text-xs mt-2">{item.month}</span>
-                </div>
-              ))}
-            </div>
-            <div className="flex justify-between mt-4">
-              <span className="text-xs text-muted-foreground">0</span>
-              <span className="text-xs text-muted-foreground">{maxHours}</span>
-            </div>
+      <Card className="p-6">
+        <div className="flex flex-col gap-2">
+          <h3 className="text-sm font-medium text-gray-500">Completion Rate</h3>
+          <div className="flex items-baseline gap-2">
+            <span className="text-3xl font-bold">{completionRate}%</span>
+            <span className="text-sm text-green-500">completed</span>
           </div>
-        </CardContent>
+        </div>
       </Card>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <Card>
-          <CardHeader>
-            <CardTitle>Statistics</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="border rounded-lg p-4">
-                  <p className="text-sm text-muted-foreground">Average Tasks per Month</p>
-                  <p className="text-2xl font-bold">24.6</p>
-                </div>
-                <div className="border rounded-lg p-4">
-                  <p className="text-sm text-muted-foreground">Average Hours per Month</p>
-                  <p className="text-2xl font-bold">38.0</p>
-                </div>
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="border rounded-lg p-4">
-                  <p className="text-sm text-muted-foreground">Total Tasks (YTD)</p>
-                  <p className="text-2xl font-bold">148</p>
-                </div>
-                <div className="border rounded-lg p-4">
-                  <p className="text-sm text-muted-foreground">Total Hours (YTD)</p>
-                  <p className="text-2xl font-bold">228</p>
-                </div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+      <Card className="p-6">
+        <div className="flex flex-col gap-2">
+          <h3 className="text-sm font-medium text-gray-500">High Priority</h3>
+          <div className="flex items-baseline gap-2">
+            <span className="text-3xl font-bold">{stats.high}</span>
+            <span className="text-sm text-red-500">tasks</span>
+          </div>
+        </div>
+      </Card>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Efficiency</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              <div className="border rounded-lg p-4">
-                <p className="text-sm text-muted-foreground">Average Time per Task</p>
-                <p className="text-2xl font-bold">1.54 hours</p>
-                <p className="text-xs text-muted-foreground mt-1">-0.2 hours from last month</p>
-              </div>
-              <div className="border rounded-lg p-4">
-                <p className="text-sm text-muted-foreground">Completion Rate</p>
-                <div className="flex items-center space-x-2">
-                  <p className="text-2xl font-bold">92%</p>
-                  <span className="text-xs text-green-600">↑ 3%</span>
+      <Card className="p-6">
+        <div className="flex flex-col gap-2">
+          <h3 className="text-sm font-medium text-gray-500">This Month</h3>
+          <div className="flex items-baseline gap-2">
+            <span className="text-3xl font-bold">{monthlyTasks.length}</span>
+            <span className="text-sm text-gray-500">tasks</span>
+          </div>
+        </div>
+      </Card>
+
+      <Card className="p-6 md:col-span-2">
+        <h3 className="text-sm font-medium text-gray-500 mb-4">Priority Distribution</h3>
+        <ResponsiveContainer width="100%" height={200}>
+          <BarChart data={priorityChartData}>
+            <XAxis dataKey="name" />
+            <YAxis allowDecimals={false} />
+            <Tooltip 
+              formatter={(value) => [`${value} tasks`, 'Count']}
+              labelStyle={{ color: '#374151' }}
+            />
+            <Bar dataKey="value">
+              {priorityChartData.map((entry, index) => (
+                <Cell key={`cell-${index}`} fill={entry.color} />
+              ))}
+            </Bar>
+          </BarChart>
+        </ResponsiveContainer>
+      </Card>
+
+      <Card className="p-6 md:col-span-2">
+        <h3 className="text-sm font-medium text-gray-500 mb-4">Task Status</h3>
+        <ResponsiveContainer width="100%" height={200}>
+          <BarChart data={statusChartData}>
+            <XAxis dataKey="name" />
+            <YAxis allowDecimals={false} />
+            <Tooltip 
+              formatter={(value) => [`${value} tasks`, 'Count']}
+              labelStyle={{ color: '#374151' }}
+            />
+            <Bar dataKey="value">
+              {statusChartData.map((entry, index) => (
+                <Cell key={`cell-${index}`} fill={entry.color} />
+              ))}
+            </Bar>
+          </BarChart>
+        </ResponsiveContainer>
+      </Card>
+
+      <Card className="p-6 md:col-span-2 lg:col-span-4">
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-sm font-medium text-gray-500">Recent Tasks</h3>
+          <span className="text-sm text-gray-500">{format(currentDate, 'MMMM yyyy')}</span>
+        </div>
+        {monthlyTasks.length === 0 ? (
+          <p className="text-sm text-gray-500">No tasks for this month</p>
+        ) : (
+          <div className="space-y-4">
+            {monthlyTasks
+              .sort((a, b) => b.dueDate - a.dueDate)
+              .slice(0, 5)
+              .map(task => (
+                <div key={task.id} className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className={`w-2 h-2 rounded-full ${
+                      task.status === 'completed' ? 'bg-green-500' : 'bg-blue-500'
+                    }`} />
+                    <div>
+                      <p className="text-sm font-medium">{task.title}</p>
+                      <p className="text-xs text-gray-500">
+                        Due {format(new Date(task.dueDate), 'MMM d')}
+                      </p>
+                    </div>
+                  </div>
+                  <span className={`text-xs px-2 py-1 rounded-full ${
+                    task.priority === 'high' 
+                      ? 'bg-red-100 text-red-700' 
+                      : task.priority === 'medium'
+                      ? 'bg-yellow-100 text-yellow-700'
+                      : 'bg-blue-100 text-blue-700'
+                  }`}>
+                    {task.priority}
+                  </span>
                 </div>
-                <div className="w-full h-2 bg-gray-200 rounded-full mt-2">
-                  <div className="h-full bg-green-500 rounded-full" style={{ width: "92%" }}></div>
-                </div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+              ))}
+          </div>
+        )}
+      </Card>
     </div>
   )
 }
