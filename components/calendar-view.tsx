@@ -1,111 +1,89 @@
 "use client"
 
-import { useState } from "react"
+import { useTasks } from "@/hooks/use-tasks"
 import { Calendar } from "@/components/ui/calendar"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { addDays, format, isSameDay } from "date-fns"
-
-// Mock data for demonstration
-const TASKS_BY_DATE = [
-  {
-    date: new Date(),
-    tasks: [
-      { title: "Team meeting", status: "completed" },
-      { title: "Project review", status: "in-progress" },
-    ],
-  },
-  { date: addDays(new Date(), 1), tasks: [{ title: "Client call", status: "not-started" }] },
-  {
-    date: addDays(new Date(), 3),
-    tasks: [
-      { title: "Presentation", status: "not-started" },
-      { title: "Report submission", status: "not-started" },
-    ],
-  },
-]
+import { Card } from "@/components/ui/card"
+import { useState } from "react"
+import { format } from "date-fns"
+import { Task } from "@/types/task"
 
 export function CalendarView() {
+  const { tasks } = useTasks()
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date())
 
-  // Find tasks for the selected date
-  const selectedDateTasks = selectedDate
-    ? TASKS_BY_DATE.find((item) => isSameDay(item.date, selectedDate))?.tasks || []
-    : []
-
-  // Function to customize day cell rendering
-  const renderDay = (day: Date | undefined) => {
-    // Check if day is a valid Date object
-    if (!day || !(day instanceof Date) || isNaN(day.getTime())) {
-      return null
-    }
-
-    const dateHasTasks = TASKS_BY_DATE.some((item) => isSameDay(item.date, day))
-
-    if (dateHasTasks) {
-      return (
-        <div className="relative flex h-8 w-8 items-center justify-center">
-          {day.getDate()}
-          <span className="absolute bottom-1 h-1 w-1 rounded-full bg-primary"></span>
-        </div>
-      )
-    }
-
-    return day.getDate()
+  const getTasksForDate = (date: Date | undefined): Task[] => {
+    if (!date || !tasks) return []
+    return tasks.filter(task => {
+      const taskDate = new Date(task.dueDate)
+      return format(taskDate, 'yyyy-MM-dd') === format(date, 'yyyy-MM-dd')
+    })
   }
 
+  const selectedTasks = getTasksForDate(selectedDate)
+
   return (
-    <div className="grid md:grid-cols-2 gap-6">
-      <Card>
-        <CardHeader>
-          <CardTitle>Calendar</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <Calendar
-            mode="single"
-            selected={selectedDate}
-            onSelect={setSelectedDate}
-            className="rounded-md border"
-            components={{
-              DayContent: ({ day }) => renderDay(day),
-            }}
-          />
-        </CardContent>
+    <div className="grid grid-cols-1 md:grid-cols-[300px_1fr] gap-8">
+      <Card className="p-4">
+        <Calendar
+          mode="single"
+          selected={selectedDate}
+          onSelect={setSelectedDate}
+          className="rounded-md"
+          modifiers={{
+            booked: (date) => getTasksForDate(date).length > 0
+          }}
+          modifiersStyles={{
+            booked: { fontWeight: "bold", backgroundColor: "rgba(59, 130, 246, 0.1)" }
+          }}
+        />
       </Card>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>{selectedDate ? format(selectedDate, "MMMM d, yyyy") : "No date selected"}</CardTitle>
-        </CardHeader>
-        <CardContent>
-          {selectedDateTasks.length > 0 ? (
-            <div className="space-y-4">
-              {selectedDateTasks.map((task, index) => (
-                <div key={index} className="flex justify-between items-center p-3 border rounded-md">
-                  <span className="font-medium">{task.title}</span>
-                  <Badge
-                    variant="outline"
-                    className={
-                      task.status === "completed"
-                        ? "bg-green-100 text-green-800"
-                        : task.status === "in-progress"
-                          ? "bg-blue-100 text-blue-800"
-                          : "bg-gray-100 text-gray-800"
-                    }
-                  >
-                    {task.status === "in-progress"
-                      ? "In Progress"
-                      : task.status === "not-started"
-                        ? "Not Started"
-                        : "Completed"}
-                  </Badge>
+      <Card className="p-6">
+        <div className="space-y-4">
+          <h2 className="text-lg font-semibold">
+            Tasks for {selectedDate ? format(selectedDate, 'MMMM d, yyyy') : 'Selected Date'}
+          </h2>
+          {selectedTasks.length === 0 ? (
+            <p className="text-sm text-gray-500">No tasks scheduled for this date</p>
+          ) : (
+            <div className="space-y-3">
+              {selectedTasks.map(task => (
+                <div
+                  key={task.id}
+                  className={`p-3 rounded-lg border ${
+                    task.status === 'completed' 
+                      ? 'bg-green-50 border-green-100' 
+                      : 'bg-white border-gray-200'
+                  }`}
+                >
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h3 className={`text-sm font-medium ${
+                        task.status === 'completed' ? 'text-green-700 line-through' : 'text-gray-900'
+                      }`}>
+                        {task.title}
+                      </h3>
+                      <p className={`text-xs mt-1 ${
+                        task.status === 'completed' ? 'text-green-600/70' : 'text-gray-500'
+                      }`}>
+                        {task.description}
+                      </p>
+                    </div>
+                    <span className={`text-xs px-2 py-1 rounded-full ${
+                      task.priority === 'high' 
+                        ? 'bg-red-100 text-red-700' 
+                        : task.priority === 'medium'
+                        ? 'bg-yellow-100 text-yellow-700'
+                        : 'bg-blue-100 text-blue-700'
+                    }`}>
+                      {task.priority}
+                    </span>
+                  </div>
                 </div>
               ))}
             </div>
-          ) : (
-            <p className="text-muted-foreground">No tasks scheduled for this date.</p>
           )}
-        </CardContent>
+        </div>
       </Card>
     </div>
   )
