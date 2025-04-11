@@ -1,50 +1,55 @@
 "use client"
 
-import { usePathname } from "next/navigation"
 import Link from "next/link"
-import { Button } from "@/components/ui/button"
-import { Home, Calendar, BarChart2, User } from "lucide-react"
+import { usePathname } from "next/navigation"
+import { cn } from "@/lib/utils"
+import { ThemeToggle } from "@/components/theme-toggle"
+import { CalendarDays, CheckSquare, LayoutDashboard, PieChart } from "lucide-react"
 
-export default function AppNavbar() {
+const navigation = [
+  { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
+  { name: "Tasks", href: "/tasks", icon: CheckSquare },
+  { name: "Calendar", href: "/calendar", icon: CalendarDays },
+  { name: "Summary", href: "/summary", icon: PieChart },
+]
+
+export function AppNavbar() {
   const pathname = usePathname()
 
-  // Don't show navbar on login page
-  if (pathname === "/") return null
-
   return (
-    <header className="border-b bg-white">
-      <div className="container mx-auto px-4 py-3 flex items-center justify-between">
-        <Link href="/dashboard" className="font-bold text-xl">
-          Task Master
-        </Link>
-
-        <nav className="flex items-center space-x-1">
-          <Button asChild variant={pathname === "/dashboard" ? "default" : "ghost"} size="sm">
-            <Link href="/dashboard" className="flex items-center">
-              <Home className="mr-2 h-4 w-4" />
-              <span className="hidden sm:inline">Dashboard</span>
-            </Link>
-          </Button>
-
-          <Button asChild variant={pathname === "/dashboard/calendar" ? "default" : "ghost"} size="sm">
-            <Link href="/dashboard/calendar" className="flex items-center">
-              <Calendar className="mr-2 h-4 w-4" />
-              <span className="hidden sm:inline">Calendar</span>
-            </Link>
-          </Button>
-
-          <Button asChild variant={pathname === "/dashboard/summary" ? "default" : "ghost"} size="sm">
-            <Link href="/dashboard/summary" className="flex items-center">
-              <BarChart2 className="mr-2 h-4 w-4" />
-              <span className="hidden sm:inline">Summary</span>
-            </Link>
-          </Button>
-
-          <Button variant="ghost" size="icon">
-            <User className="h-4 w-4" />
-            <span className="sr-only">User profile</span>
-          </Button>
-        </nav>
+    <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+      <div className="container flex h-14 items-center">
+        <div className="mr-4 hidden md:flex">
+          <Link href="/dashboard" className="mr-6 flex items-center space-x-2">
+            <span className="hidden font-bold sm:inline-block">TaskMaster</span>
+          </Link>
+          <nav className="flex items-center space-x-6 text-sm font-medium">
+            {navigation.map((item) => {
+              const Icon = item.icon
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className={cn(
+                    "flex items-center space-x-2 transition-colors hover:text-foreground/80",
+                    pathname === item.href
+                      ? "text-foreground"
+                      : "text-foreground/60"
+                  )}
+                >
+                  <Icon className="h-4 w-4" />
+                  <span>{item.name}</span>
+                </Link>
+              )
+            })}
+          </nav>
+        </div>
+        <div className="flex flex-1 items-center justify-between space-x-2 md:justify-end">
+          <div className="w-full flex-1 md:w-auto md:flex-none">
+            {/* Add search or other controls here if needed */}
+          </div>
+          <ThemeToggle />
+        </div>
       </div>
     </header>
   )
