@@ -4,12 +4,13 @@ import { Inter } from "next/font/google"
 import "./globals.css"
 import { ThemeProvider } from "@/providers/theme-provider"
 import { AppNavbar } from "@/components/app-navbar"
+import { Footer } from "@/components/footer"
 
 const inter = Inter({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
-  title: "Task Manager",
-  description: "Manage your tasks efficiently",
+  title: "Task Management App",
+  description: "A simple task management application",
 }
 
 export default function RootLayout({
@@ -21,9 +22,10 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <body className={inter.className}>
         <ThemeProvider>
-          <div className="min-h-screen bg-background">
+          <div className="flex min-h-screen flex-col">
             <AppNavbar />
-            <main>{children}</main>
+            <main className="flex-1">{children}</main>
+            <Footer />
           </div>
         </ThemeProvider>
       </body>
