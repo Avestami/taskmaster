@@ -14,28 +14,25 @@ export function AddTaskButton() {
   const [newTask, setNewTask] = useState({
     title: '',
     description: '',
-    priority: 'medium',
+    priority: 'low',
     status: 'pending',
-    dueDate: new Date().toISOString().split('T')[0],
-    name: 'User',
+    dueDate: new Date().getTime(),
+    name: '',
     avatar: '',
     category: []
   })
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    await addTask({
-      ...newTask,
-      dueDate: new Date(newTask.dueDate).getTime()
-    })
+    await addTask(newTask)
     setOpen(false)
     setNewTask({
       title: '',
       description: '',
-      priority: 'medium',
+      priority: 'low',
       status: 'pending',
-      dueDate: new Date().toISOString().split('T')[0],
-      name: 'User',
+      dueDate: new Date().getTime(),
+      name: '',
       avatar: '',
       category: []
     })
@@ -45,12 +42,12 @@ export function AddTaskButton() {
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button className="fixed bottom-6 right-6" size="lg">
-          Add New Task
+          Add Task
         </Button>
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Add New Task</DialogTitle>
+          <DialogTitle>New Task</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           <Input
@@ -70,22 +67,22 @@ export function AddTaskButton() {
             onValueChange={(value) => setNewTask({ ...newTask, priority: value })}
           >
             <SelectTrigger>
-              <SelectValue placeholder="Select Priority" />
+              <SelectValue placeholder="Priority" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="low">Low Priority</SelectItem>
-              <SelectItem value="medium">Medium Priority</SelectItem>
-              <SelectItem value="high">High Priority</SelectItem>
+              <SelectItem value="low">Low</SelectItem>
+              <SelectItem value="medium">Medium</SelectItem>
+              <SelectItem value="high">High</SelectItem>
             </SelectContent>
           </Select>
           <Input
             type="date"
-            value={newTask.dueDate}
-            onChange={(e) => setNewTask({ ...newTask, dueDate: e.target.value })}
+            value={new Date(newTask.dueDate).toISOString().split('T')[0]}
+            onChange={(e) => setNewTask({ ...newTask, dueDate: new Date(e.target.value).getTime() })}
             required
           />
           <Button type="submit" className="w-full">
-            Add Task
+            Create Task
           </Button>
         </form>
       </DialogContent>

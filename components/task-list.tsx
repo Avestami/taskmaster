@@ -6,39 +6,35 @@ import { useTasks } from "@/hooks/use-tasks"
 
 // Make sure to use default export since that's how it's imported in dashboard/page.tsx
 export default function TaskList() {
-  const { tasks, loading, error, updateTask, deleteTask } = useTasks();
+  const { tasks, loading, error, updateTask, deleteTask } = useTasks()
 
-  if (loading) {
-    return <div className="flex justify-center p-4">Loading tasks...</div>
-  }
+  if (loading) return <div className="flex justify-center p-4">Loading tasks...</div>
+  if (error) return <div className="text-red-500 p-4">Error: {error.message}</div>
 
-  if (error) {
-    return <div className="text-red-500 p-4">Error: {error.message}</div>
-  }
+  const remainingTasks = tasks?.filter(task => task.status !== 'completed').length || 0
+  const completedTasks = tasks?.filter(task => task.status === 'completed').length || 0
 
   return (
-    <Tabs defaultValue="all" className="w-full">
-      <TabsList className="grid grid-cols-4 mb-6">
-        <TabsTrigger value="all">All</TabsTrigger>
-        <TabsTrigger value="pending">Pending</TabsTrigger>
-        <TabsTrigger value="completed">Completed</TabsTrigger>
-        <TabsTrigger value="important">Important</TabsTrigger>
-      </TabsList>
+    <div>
+      <div className="flex justify-between mb-6">
+        <div className="text-sm">
+          <span className="font-medium">{remainingTasks}</span> tasks remaining
+        </div>
+        <div className="text-sm text-green-600">
+          <span className="font-medium">{completedTasks}</span> completed
+        </div>
+      </div>
+      
+      <Tabs defaultValue="all" className="w-full">
+        <TabsList className="grid grid-cols-4 mb-6">
+          <TabsTrigger value="all">All ({tasks?.length || 0})</TabsTrigger>
+          <TabsTrigger value="pending">Active ({remainingTasks})</TabsTrigger>
+          <TabsTrigger value="completed">Done ({completedTasks})</TabsTrigger>
+          <TabsTrigger value="important">Important</TabsTrigger>
+        </TabsList>
 
-      <TabsContent value="all" className="space-y-4">
-        {tasks?.map((task) => (
-          <TaskItem
-            key={task.id}
-            task={task}
-            onDelete={() => deleteTask(task.id)}
-            onUpdate={(updates) => updateTask(task.id, updates)}
-          />
-        ))}
-      </TabsContent>
-
-      <TabsContent value="pending" className="space-y-4">
-        {tasks?.filter(task => task.status !== 'completed')
-          .map((task) => (
+        <TabsContent value="all" className="space-y-4">
+          {tasks?.map((task) => (
             <TaskItem
               key={task.id}
               task={task}
@@ -46,31 +42,44 @@ export default function TaskList() {
               onUpdate={(updates) => updateTask(task.id, updates)}
             />
           ))}
-      </TabsContent>
+        </TabsContent>
 
-      <TabsContent value="completed" className="space-y-4">
-        {tasks?.filter(task => task.status === 'completed')
-          .map((task) => (
-            <TaskItem
-              key={task.id}
-              task={task}
-              onDelete={() => deleteTask(task.id)}
-              onUpdate={(updates) => updateTask(task.id, updates)}
-            />
-          ))}
-      </TabsContent>
+        <TabsContent value="pending" className="space-y-4">
+          {tasks?.filter(task => task.status !== 'completed')
+            .map((task) => (
+              <TaskItem
+                key={task.id}
+                task={task}
+                onDelete={() => deleteTask(task.id)}
+                onUpdate={(updates) => updateTask(task.id, updates)}
+              />
+            ))}
+        </TabsContent>
 
-      <TabsContent value="important" className="space-y-4">
-        {tasks?.filter(task => task.priority === 'high')
-          .map((task) => (
-            <TaskItem
-              key={task.id}
-              task={task}
-              onDelete={() => deleteTask(task.id)}
-              onUpdate={(updates) => updateTask(task.id, updates)}
-            />
-          ))}
-      </TabsContent>
-    </Tabs>
+        <TabsContent value="completed" className="space-y-4">
+          {tasks?.filter(task => task.status === 'completed')
+            .map((task) => (
+              <TaskItem
+                key={task.id}
+                task={task}
+                onDelete={() => deleteTask(task.id)}
+                onUpdate={(updates) => updateTask(task.id, updates)}
+              />
+            ))}
+        </TabsContent>
+
+        <TabsContent value="important" className="space-y-4">
+          {tasks?.filter(task => task.priority === 'high')
+            .map((task) => (
+              <TaskItem
+                key={task.id}
+                task={task}
+                onDelete={() => deleteTask(task.id)}
+                onUpdate={(updates) => updateTask(task.id, updates)}
+              />
+            ))}
+        </TabsContent>
+      </Tabs>
+    </div>
   )
 }
